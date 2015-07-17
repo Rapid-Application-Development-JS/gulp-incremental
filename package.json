@@ -1,0 +1,23 @@
+{
+  "name": "gulp-incremental",
+  "version": "0.1.0",
+  "description": "HTML/underscore template converter to Incremental DOM",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Rapid-Application-Development-JS/gulp-incremental.git"
+  },
+  "author": "Yuriy Luchaninov <y.luchaninov@mobidev.biz> (http://mobidev.biz/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Rapid-Application-Development-JS/gulp-incremental/issues"
+  },
+  "dependencies": {
+    "htmlparser2": "~3.8.3",
+    "gulp": "~3.9.0",
+    "through2": "~2.0.0"
+  }
+}
