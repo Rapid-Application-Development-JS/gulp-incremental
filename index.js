@@ -1,45 +1,49 @@
-// Consts
-const PLUGIN_NAME = "gulp-iDOM";
-
 var htmlparser = require("htmlparser2");
 var through = require("through2");
 var gutil = require("gulp-util");
-
 var PluginError = gutil.PluginError;
 
-var result = [];
-var currentTag = null;
-var exceptions = ["pre", "script"];
-var duty = ["evaluate"];
-var breakLine = /(\r\n|\n|\r)/gm;
-var formatLevel = 1;
+// Consts
+const PLUGIN_NAME = "gulp-incremental";
+const EXCEPTIONS = ["pre", "script"];
+const DUTY = ["evaluate"];
+const BREAK_LINE = /(\r\n|\n|\r)/gm;
+const NEW_LINE = "String.fromCharCode(10)";
 
-var options = { // todo move to external options
+// variables
+var _result = [];
+var _currentTag = null;
+var _formatLevel = 1;
+var _options = {
+    parameterName: "data",
     template: {
         evaluate: /<%([\s\S]+?)%>/g,
         interpolate: /<%=([\s\S]+?)%>/g,
         escape: /<%-([\s\S]+?)%>/g
     },
-    parameterName: "data"
-};
-
-var MAP = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
+    escape: /[&<>]/g,
+    MAP: {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    },
+    helpers: {
+        open: "{%",
+        close: "%}"
+    }
 };
 
 function escapeHTML(s) {
-    return s.replace(/[&<>]/g, function (c) {
-        return MAP[c];
+    return s.replace(_options.escape, function (c) {
+        return _options.MAP[c];
     });
 }
 
 function flushParser() {
-    result.length = 0;
-    currentTag = null;
+    _result.length = 0;
+    _currentTag = null;
 }
 
 function insertTabs(number) {
@@ -50,7 +54,7 @@ function insertTabs(number) {
 }
 
 function warpInFunc(name, string) {
-    return "function " + name + "(" + options.parameterName + "){" + string + "\n}";
+    return "function " + name + "(" + _options.parameterName + "){" + string + "\n}";
 }
 
 function extractFileName(path) {
@@ -84,18 +88,18 @@ function decodeTemplates(string, openTag, closeTag) {
 
 function encodeTemplates(string) {
     return string
-        .replace(options.template.interpolate, function (match, p1) {
-            return "{%" + p1 + "%}"; // todo move to constant
+        .replace(_options.template.interpolate, function (match, p1) {
+            return _options.helpers.open + p1 + _options.helpers.close;
         })
-        .replace(options.template.escape, function (match, p1) {
-            return "{%" + escapeHTML(p1) + "%}";
+        .replace(_options.template.escape, function (match, p1) {
+            return _options.helpers.open + escapeHTML(p1) + _options.helpers.close;
         })
-        .replace(options.template.evaluate, function (match, p1) {
-            return "<evaluate>" + p1 + "</evaluate>";
+        .replace(_options.template.evaluate, function (match, p1) {
+            return "<evaluate>" + p1.trim() + "</evaluate>";
         });
 }
 
-function writeLine(command, line, noEscape) {
+function writeCommand(command, line, noEscape) {
     var attribs = "";
 
     if (line.length === 0) // don't write empty string or array
@@ -105,7 +109,7 @@ function writeLine(command, line, noEscape) {
         if (noEscape)
             attribs = line;
         else
-            attribs = "'" + line.replace("'", "\\'") + "'";
+            attribs = "'" + line.replace("'", "\\'") + "'"; // wrap attribute value
 
     } else { // create formatted string from array
         for (var i = 0; i < line.length; i++) {
@@ -116,18 +120,19 @@ function writeLine(command, line, noEscape) {
         }
     }
 
-    result.push(insertTabs(formatLevel) + command + "(" + attribs + ");");
+    // wrap in command
+    _result.push(insertTabs(_formatLevel) + command + "(" + attribs + ");");
 }
 
-function write(string, noEscape) {
-    result.push(noEscape ? string: string.replace(/[\r\t\n]/g, " "));
+function writeLine(string, noEscape) {
+    _result.push(noEscape ? string : string.replace(BREAK_LINE, " "));
 }
 
-var parser = new htmlparser.Parser({ // todo new?
+var _handler = {
     onopentag: function (name, attribs) {
         var args = ["'" + name + "'"];
 
-        if (duty.indexOf(name) === -1) {
+        if (DUTY.indexOf(name) === -1) {
             for (var key in attribs) {
                 if (attribs.hasOwnProperty(key)) {
                     if (args.length === 1) {
@@ -136,54 +141,65 @@ var parser = new htmlparser.Parser({ // todo new?
                     }
 
                     args.push("'" + key + "'");
-                    args.push(decodeTemplates(attribs[key], '{%', '%}'));
+                    args.push(decodeTemplates(attribs[key], _options.helpers.open, _options.helpers.close));
                 }
             }
 
-            writeLine("elementOpen", args);
+            writeCommand("elementOpen", args);
         } else {
-            write(insertTabs(formatLevel), true);
+            writeLine(insertTabs(_formatLevel), true);
         }
 
-        currentTag = name;
-        formatLevel++;
+        _currentTag = name;
+        _formatLevel++;
     },
     ontext: function (text) {
-        if (duty.indexOf(currentTag) !== -1) {
-            write(text);
-        } else if (exceptions.indexOf(currentTag) === -1) {
-            writeLine("text", decodeTemplates(text.replace(breakLine, "").trim(), '{%', '%}'), true);
+        var line;
+        if (DUTY.indexOf(_currentTag) !== -1) {
+            writeLine(text);
+        } else if (EXCEPTIONS.indexOf(_currentTag) === -1) {
+            line = text.replace(BREAK_LINE, "").trim();
+            if (line.length > 0)
+                writeCommand("text", decodeTemplates(line, _options.helpers.open, _options.helpers.close), true);
         } else { // save format (break lines) for exception tags
-            var lines = text.split(breakLine), line;
+            var lines = text.split(BREAK_LINE);
             for (var i = 0; i < lines.length; i++) {
                 line = lines[i];
 
-                if (breakLine.exec(line))
-                    writeLine("text", "String.fromCharCode(10)", true); // todo change to constant
-                else if (line.length > 0)
-                    writeLine("text", decodeTemplates(line, '{%', '%}'), true);
+                if (BREAK_LINE.exec(line))
+                    writeCommand("text", NEW_LINE, true);
+                else
+                    writeCommand("text", decodeTemplates(line, _options.helpers.open, _options.helpers.close), true);
             }
         }
     },
     onclosetag: function (tagname) {
-        formatLevel--;
-        if (duty.indexOf(tagname) === -1)
-            writeLine("elementClose", tagname);
+        _formatLevel--;
+        if (DUTY.indexOf(tagname) === -1)
+            writeCommand("elementClose", tagname);
     }
-}, {decodeEntities: true});
+};
 
 // Plugin level function(dealing with files)
-function gulpCompiler() {
+function gulpCompiler(newOptions) {
+
+    // mix options
+    for (var key in newOptions) {
+        if (newOptions.hasOwnProperty(key))
+            _options[key] = newOptions[key];
+    }
 
     // Creating a stream through which each file will pass
     return through.obj(function (file, enc, cb) {
-        var buffer, content;
+        var buffer, content, parser;
 
         if (file.isNull()) {
             // return empty file
             return cb(null, file);
         }
         if (file.isBuffer()) {
+            parser = new htmlparser.Parser( _handler, {decodeEntities: true});
+
             //get file content as string
             buffer = new Buffer(file.contents);
             content = buffer.toString();
@@ -193,7 +209,7 @@ function gulpCompiler() {
             parser.end();
 
             // wrap parse result in function
-            content = warpInFunc(extractFileName(file.path), result.join(""));
+            content = warpInFunc(extractFileName(file.path), _result.join(""));
             file.contents = new Buffer(content, "utf-8");
 
             // clear parser

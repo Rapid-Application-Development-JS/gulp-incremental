@@ -1,0 +1,24 @@
+<h2>
+    <%- data.listTitle %>
+</h2>
+
+<ul>
+    <% _.each( data.listItems, function(listItem, i){ %>
+    <li class="row <%=(i % 2 == 1 ? ' even' : '')%>">
+        <%- listItem.name %>
+        <% if (listItem.hasOlympicGold){ %>
+        <em>*</em>
+        <% } %>
+    </li>
+    <% }); %>
+</ul>
+
+<% var showFootnote = _.any(
+_.pluck( data.listItems, "hasOlympicGold" )
+); %>
+
+<% if ( showFootnote ){ %>
+<p style="font-size: 12px ;">
+    <em>* Olympic gold medalist</em>
+</p>
+<% } %>

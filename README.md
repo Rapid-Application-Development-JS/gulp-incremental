@@ -1,2 +1,2 @@
 # gulp-incremental
-HTML/underscore template converter to Incremental DOM
+HTML/underscore/ejs template converter to Incremental DOM

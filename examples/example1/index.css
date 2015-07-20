@@ -1,0 +1,11 @@
+ul {
+    list-style-type: none;
+}
+
+.row {
+    color: #1e3566;
+}
+
+.even {
+    background-color: aliceblue;
+}
