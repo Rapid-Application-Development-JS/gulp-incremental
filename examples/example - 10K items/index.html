@@ -43,6 +43,7 @@
     var length = 10000;
     var templateData = new Array(length);
     var averageData = {
+        itemsCount: length,
         init: 0,
         start:0,
         duration:0,
@@ -66,7 +67,7 @@
     var templateContainer = document.querySelector('.template');
     var averageContainer = document.querySelector('.average');
     setInterval(function(){
-        var date = new Date().getTime();
+        var date = window.perfNow();
         for (var i = 0; i < templateData.length; i++) {
             templateData[i].data = date;
         }

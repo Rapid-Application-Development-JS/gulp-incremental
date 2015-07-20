@@ -1,5 +1,8 @@
 function average(data){
 	elementOpen('div');
+		text('Items count: '+ data.itemsCount +';');
+	elementClose('div');
+	elementOpen('div');
 		text('Init rendering: '+ data.init +'ms;');
 	elementClose('div');
 	elementOpen('div');
