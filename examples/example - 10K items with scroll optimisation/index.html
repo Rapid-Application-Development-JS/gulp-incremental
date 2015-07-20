@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Incremental DOM Example</title>
+    <link rel="stylesheet" href="index.css"/>
+    <script src="../lib/incremental-dom.js"></script>
+    <script src="../lib/underscore-min.js"></script>
+
+    <script src="bin/templates.js"></script>
+</head>
+<body>
+<div class="average"></div>
+<div class="template"></div>
+<script>
+    // Performance.now() polyfill
+    (function (w) {
+        var perfNow;
+        var perfNowNames = ['now', 'webkitNow', 'msNow', 'mozNow'];
+        if (!!w['performance']) for (var i = 0; i < perfNowNames.length; ++i) {
+            var n = perfNowNames[i];
+            if (!!w['performance'][n]) {
+                perfNow = function () {
+                    return w['performance'][n]()
+                };
+                break;
+            }
+        }
+        if (!perfNow) {
+            perfNow = Date.now;
+        }
+        w.perfNow = perfNow;
+    })(window);
+
+    // lets work $)
+    var patch = IncrementalDOM.patch,
+            elementOpen = IncrementalDOM.elementOpen,
+            elementClose = IncrementalDOM.elementClose,
+            text = IncrementalDOM.text;
+
+    // create array
+    var length = 10000;
+    var templateData = new Array(length);
+    var averageData = {
+        itemsCount: length,
+        init: 0,
+        start: 0,
+        duration: 0,
+        count: 0
+    };
+
+    // fill by stubs
+    for (var i = 0; i < templateData.length; i++) {
+        templateData[i] = {
+            color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+            data: ''
+        };
+    }
+
+    // init render
+    averageData.start = window.perfNow();
+    patch(document.querySelector('.template'), table, templateData);
+    averageData.init = window.perfNow() - averageData.start;
+
+    function dividedUpdate(start, chank, data) {
+        setTimeout(function () {
+            averageData.start = window.perfNow();
+            for (var i = start; i < start + chank && i < templateData.length; i++) {
+                templateData[i].data = data;
+            }
+            patch(templateContainer, table, templateData); // update DOM
+            averageData.duration += window.perfNow() - averageData.start;
+            averageData.count++;
+        }, 0);
+    }
+
+    // run
+    var templateContainer = document.querySelector('.template');
+    var averageContainer = document.querySelector('.average');
+    var step = 100;
+    setInterval(function () {
+        var date = window.perfNow();
+
+        for (var i = 0; i < templateData.length; i += step) {
+            dividedUpdate(i, step, date);
+        }
+
+        patch(averageContainer, average, averageData); // update counter
+    }, 1000);
+</script>
+</body>
+</html>
