@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Incremental DOM Example</title>
+    <link rel="stylesheet" href="index.css"/>
+    <script src="../lib/incremental-dom.js"></script>
+    <script src="../lib/jquery-2.1.4.js"></script>
+    <script src="../lib/underscore-min.js"></script>
+    <script src="../lib/backbone.js"></script>
+
+    <script src="bin/templates.js"></script>
+</head>
+<body>
+<div class="container"></div>
+<script>
+    var patch = IncrementalDOM.patch,
+            elementOpen = IncrementalDOM.elementOpen,
+            elementClose = IncrementalDOM.elementClose,
+            text = IncrementalDOM.text;
+
+    var DocumentRow = Backbone.View.extend({
+        tagName: "div",
+
+        events: {
+            "click .button.edit": "click"
+        },
+
+        initialize: function () {
+            this.model = new (Backbone.Model.extend({}))();
+            this.model.set({counter: 0});
+
+            this.listenTo(this.model, "change", this.render);
+        },
+
+        render: function () {
+            patch(this.el, template, this.model.get('counter'));
+        },
+
+        click: function () {
+            var counter = this.model.get('counter');
+            this.model.set({counter: ++counter});
+        }
+    });
+
+    var row = new DocumentRow();
+    row.setElement(document.querySelector('.container'));
+    row.render();
+
+</script>
+</body>
+</html>
