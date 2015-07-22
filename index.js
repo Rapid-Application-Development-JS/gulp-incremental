@@ -16,6 +16,9 @@ var _currentTag = null;
 var _formatLevel = 1;
 var _options = {
     parameterName: "data",
+    functionName: function(filename, path) {
+        return filename;
+    },
     template: {
         evaluate: /<%([\s\S]+?)%>/g,
         interpolate: /<%=([\s\S]+?)%>/g,
@@ -63,10 +66,10 @@ function warpInFunc(name, string) {
 }
 
 function extractFileName(path) {
-    var name = path.split("/");
-    name = name[name.length - 1];
+    var parts = path.split("/");
+    var name = parts.pop();
 
-    return name.split(".")[0];
+    return _options.functionName(name.split(".")[0], parts.join("/"));
 }
 
 function decodeTemplates(string, openTag, closeTag) {

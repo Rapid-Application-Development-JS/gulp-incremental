@@ -93,6 +93,8 @@ gulp.task('default', function() {
 You may transfer an object with options to the plugin:
 
 * **parameterName**<a name="parameterName"></a> - name of the data object, which is transferred to the render function.
+* **functionName** - function for rename render function: arguments filename & file path.
+return value is modName
 * **template** (*interpolate*, *escape*, *evaluate*) - regular expression of your templates; you may change them, so that the compiler will process your template syntax. 
 > Take note that compilation is carried out in the following order: *interpolate*, *escape*, *evaluate*. In further versions we plan to provide an opportunity of changing the sequence of template processing.
 
@@ -114,6 +116,9 @@ By default the options have the following values:
 ```javascript
 {
     parameterName: "data",
+    functionName: function(filename, path) {
+        return filename;
+    },
     template: {
         evaluate: /<%([\s\S]+?)%>/g,
         interpolate: /<%=([\s\S]+?)%>/g,
