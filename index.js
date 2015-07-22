@@ -33,6 +33,7 @@ var _options = {
         "'": '&#39;'
     },
     format: true,
+    ignore: "js",
     helpers: {
         open: "{%",
         close: "%}"
@@ -199,29 +200,33 @@ function gulpCompiler(newOptions) {
 
     // Creating a stream through which each file will pass
     return through.obj(function (file, enc, cb) {
-        var buffer, content, parser;
+        var buffer, content, parser, extension;
 
         if (file.isNull()) {
             // return empty file
             return cb(null, file);
         }
         if (file.isBuffer()) {
-            parser = new htmlparser.Parser( _handler, {decodeEntities: true});
+            extension = file.path.split('.');
+            extension = extension[extension.length - 1];
+            if (extension !== _options.ignore) {
+                parser = new htmlparser.Parser( _handler, {decodeEntities: true});
 
-            //get file content as string
-            buffer = new Buffer(file.contents);
-            content = buffer.toString();
+                //get file content as string
+                buffer = new Buffer(file.contents);
+                content = buffer.toString();
 
-            // parse content
-            parser.write(encodeTemplates(content));
-            parser.end();
+                // parse content
+                parser.write(encodeTemplates(content));
+                parser.end();
 
-            // wrap parse result in function
-            content = warpInFunc(extractFileName(file.path), _result.join(""));
-            file.contents = new Buffer(content, "utf-8");
+                // wrap parse result in function
+                content = warpInFunc(extractFileName(file.path), _result.join(""));
+                file.contents = new Buffer(content, "utf-8");
 
-            // clear parser
-            flushParser();
+                // clear parser
+                flushParser();
+            }
         }
         if (file.isStream()) {
             throw new PluginError(PLUGIN_NAME, "Sorry, stream mode not supported");

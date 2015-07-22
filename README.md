@@ -108,6 +108,7 @@ function escapeHTML(s) {
 }
 ```
 * **format** - `true` or `false`, format or not source code.
+* **ignore** - file extension that will not compile
 * **helpers** (*open*, *close*) - service lines for processing *interpolate*, *escape* templates; it's better not to modify them.
 
 
@@ -132,7 +133,8 @@ By default the options have the following values:
         '"': '&quot;',
         "'": '&#39;'
     },
-    format: true
+    format: true,
+    ignore: 'js',
     helpers: {
         open: "{%",
         close: "%}"
@@ -141,6 +143,49 @@ By default the options have the following values:
 ```
 You may modify any option.
 
+###UMD
+For example, you also can compile your templates into one UMD module as follows:
+
+```javascript
+var gulp = require('gulp');
+var concat = require('gulp-concat');
+var umd = require('gulp-umd');
+var toIDOM = require('gulp-incremental');
+
+var exports = [];
+
+gulp.task('default', function () {
+    gulp.src(['./templates/prefix.js', './templates/*.ejs'])
+        .pipe(toIDOM({
+            functionName: function (name) {
+                exports.push(name);
+                return name;
+            }
+        }))
+        .pipe(concat('templates.js'))
+        .pipe(umd({
+            exports: function () {
+                for (var i = 0, obj = "{"; i < exports.length; i++) {
+                    if (i !== 0)
+                        obj += ",";
+                    obj += exports[i] + ":" + exports[i]
+                }
+                return obj+ "}";
+            },
+            namespace: function () {
+                return "templates";
+            }
+        }))
+        .pipe(gulp.dest('build'));
+});
+```
+Where `prefix.js`:
+
+```javascript
+var elementOpen = IncrementalDOM.elementOpen,
+    elementClose = IncrementalDOM.elementClose,
+    text = IncrementalDOM.text;
+```
 
 
 ##Use
