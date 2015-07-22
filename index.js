@@ -29,6 +29,7 @@ var _options = {
         '"': '&quot;',
         "'": '&#39;'
     },
+    format: true,
     helpers: {
         open: "{%",
         close: "%}"
@@ -47,14 +48,18 @@ function flushParser() {
 }
 
 function insertTabs(number) {
-    for (var i = 0, tabs = "\n"; i < number; i++) {
-        tabs += "\t";
-    }
+    var i, tabs = '';
+    if (_options.format)
+        for (i = 0, tabs += "\n"; i < number; i++) {
+            tabs += "\t";
+        }
+
     return tabs;
 }
 
 function warpInFunc(name, string) {
-    return "function " + name + "(" + _options.parameterName + "){" + string + "\n}";
+    var suffix = _options.format ? "\n}" : "}";
+    return "function " + name + "(" + _options.parameterName + "){" + string + suffix;
 }
 
 function extractFileName(path) {

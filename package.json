@@ -1,6 +1,6 @@
 {
   "name": "gulp-incremental",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "HTML/underscore/ejs template converter to Incremental DOM",
   "main": "index.js",
   "scripts": {

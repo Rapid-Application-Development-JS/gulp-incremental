@@ -105,7 +105,7 @@ function escapeHTML(s) {
     });
 }
 ```
-
+* **format** - `true` or `false`, format or not source code.
 * **helpers** (*open*, *close*) - service lines for processing *interpolate*, *escape* templates; it's better not to modify them.
 
 
@@ -127,6 +127,7 @@ By default the options have the following values:
         '"': '&quot;',
         "'": '&#39;'
     },
+    format: true
     helpers: {
         open: "{%",
         close: "%}"
