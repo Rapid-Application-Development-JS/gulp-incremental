@@ -2,6 +2,8 @@
 
 Compiler from [ejs](http://www.embeddedjs.com/)/[underscore templates](http://underscorejs.org/#template) or simply HTML to [incremental-DOM by Google](http://google.github.io/incremental-dom/) JavaScript function; implemented as a plugin to **gulp**.
 
+> If you are looking to browser side convert library of templates into incremental-dom: [itemplate](https://github.com/Rapid-Application-Development-JS/itemplate)
+
 Now you can speed up and optimize your application, which once used standard templates, with incremental DOM. You may read more about it [here](https://medium.com/google-developers/introducing-incremental-dom-e98f79ce2c5f).
 
 ##Example
